@@ -432,12 +432,13 @@ string Cmd::Command(char* str) {
 	}
 	
 	switch (strToEnumPr(l->trim(par1))) {
-	case 1: 
+	case 1:
 
-		if (string(pom1).find('?') != std::string::npos || !strcmp(pom1,"")) {
-			sprintf(out,"\ncreate <table_name> <col_type>:<col_name> ...\n");
+		if (string(pom1).find('?') != std::string::npos || !strcmp(pom1, "")) {
+			sprintf(out, "\ncreate <table_name> <col_type>:<col_name> ...\n");
 			return out;
 		}
+		printf("Hello");
 		return printColumns(createTable(pom1));
 		break;
 
