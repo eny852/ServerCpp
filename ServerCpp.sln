@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29411.108
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ServerCpp", "SocketServer-Rewritten.vcxproj", "{A0B3AB8D-932F-4236-B702-D1F60B7172E3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A0B3AB8D-932F-4236-B702-D1F60B7172E3}.Debug|x86.ActiveCfg = Debug|Win32
+		{A0B3AB8D-932F-4236-B702-D1F60B7172E3}.Debug|x86.Build.0 = Debug|Win32
+		{A0B3AB8D-932F-4236-B702-D1F60B7172E3}.Release|x86.ActiveCfg = Release|Win32
+		{A0B3AB8D-932F-4236-B702-D1F60B7172E3}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6037D2A3-DDAB-4D9D-8322-B6608B9AA031}
+	EndGlobalSection
+EndGlobal

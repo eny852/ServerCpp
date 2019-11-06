@@ -1,0 +1,5 @@
+INT:rok STRING:meno DOUBLE:dd UNDEF:KOKOOO ;
+Ab* Abc* Abcd* Abcde* ;
+R* o* b* o* ;
+J* u* r* o* ;
+L* u* k* y* ;
