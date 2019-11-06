@@ -47,6 +47,7 @@ public:
 	char* Cmd::registerUsr(char* cmd);
 	TABLE* Cmd::findTable(string str);
 	string Cmd::loadTable(string str);
+	string Cmd::checkTypes(TABLE* t,string str);
 	bool Cmd::addRow(TABLE* t, string str);
 	string Cmd::saveTable(string str);
 	vector<string> Cmd::split(string str, char delimiter);

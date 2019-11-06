@@ -374,8 +374,11 @@ bool Cmd::addRow(TABLE* t, string str) {
 	Login* l = new Login();
 	int sizeVs = 0;
 
-		strVs = split(str, '*');
 		sizeVs = strVs.size() - 1;
+		strVs = split(str, '*');
+		if (sizeVs < 1) {
+			return false;
+		}
 		for (int j = 0; j < sizeVs; j++) {
 			if (isFreeSpace(t)) {
 				t->col[j].rows[t->col[j].rowCount++] = l->trim(strVs[j].c_str());
@@ -383,6 +386,12 @@ bool Cmd::addRow(TABLE* t, string str) {
 		}
 
 	return true;
+}
+
+string Cmd::checkTypes(TABLE* t, string str) {
+
+
+	return str;
 }
 
 string Cmd::loadTable(string str) {
@@ -438,7 +447,6 @@ string Cmd::Command(char* str) {
 			sprintf(out, "\ncreate <table_name> <col_type>:<col_name> ...\n");
 			return out;
 		}
-		printf("Hello");
 		return printColumns(createTable(pom1));
 		break;
 
@@ -450,7 +458,8 @@ string Cmd::Command(char* str) {
 
 
 		t = findTable(l->trim(par2));
-		if (addRow(t, pom1)) {
+		if (addRow(t, pom2)) {
+
 			sprintf(out, "\nRecord ADDED SUCCESSFULLY !!!\n");
 			return out;
 		}
@@ -513,7 +522,7 @@ string Cmd::Command(char* str) {
 
 	default: 
 
-		return "\n!!! Neplatny prikaz !!!\n"+printEnumPr();
+		return "\n!!! Unknown command !!!"+printEnumPr();
 		break;
 	}
 }
