@@ -25,8 +25,8 @@ void Cmd::initialize(TABLE* table) {
 	table->col = (COLUMN*) calloc(TABLE_CAP, sizeof(COLUMN));
 	
 	for (int i = 0; i < TABLE_CAP;i++) {
-		table->col[i].rowCap = TABLE_CAP;
 		table->col[i].rows = (string*)calloc(TABLE_CAP, sizeof(string));
+		table->col[i].rowCap = TABLE_CAP;
 	}
 }
 
@@ -234,17 +234,25 @@ string printRows(TABLE* t) {
 	string str;
 	string ciara = headline(t);
 	char pom[BUFFER_LENGTH] = {};
-	for (int i = 0; i < t->colCount; i++) {
-		for (int j = 0; j < t->col[i].rowCount;j++) {
-			sprintf(pom, "| %21s |", t->col[j].rows[i].c_str());
-			str += string(pom);
+	strcpy(pom,t->name.c_str());
+	if (t->col != NULL) {
+		for (int i = 0; i < t->col[0].rowCount; i++) {
+			for (int j = 0; j < t->colCount; j++) {
+				sprintf(pom, "| %21s |", t->col[j].rows[i].c_str());
+				str += string(pom);
+
+				if (j == t->colCount - 1 && i < t->col[0].rowCount-1) {
+					str += "\n";
+				}
+			}
+
 		}
-		if (i!=t->colCount-1) {
-			str += "\n";
-		}
+		str += ciara;
+		return str;
 	}
-	str += ciara;
-	return str;
+	else {
+		return "NOT VALID TABLE!";
+	}
 }
 
 char* Cmd::loginUsr(char* cmd) {
@@ -358,11 +366,18 @@ string Cmd::saveTable(string str) {
 		fprintf(output, "%s:%-s ", EnumToStrTp(t->col[i].type).c_str(), t->col[i].name);
 	}
 	fprintf(output, ";\n");
-	for (int i = 0; i < t->colCount; i++) {
-		for (int j = 0; j < t->col[i].rowCount; j++) {
+	for (int i = 0; i < t->col[0].rowCount; i++) {
+		for (int j = 0; j < t->colCount; j++) {
 			fprintf(output,"%s* ",t->col[j].rows[i].c_str());
+
+			if (j == t->colCount - 1 && i < t->col[0].rowCount - 1) {
+				fprintf(output, ";\n");
+			}
+			else if (i == t->col[0].rowCount - 1 && j == t->colCount - 1){
+				fprintf(output, ";");
+			}
 		}
-		fprintf(output, ";\n");
+
 	}
 	fclose(output);
 	sprintf(out,"\nTABLE: <%s> SAVED SUCCESSFULLY !!!\n", t->name.c_str());
@@ -373,15 +388,18 @@ bool Cmd::addRow(TABLE* t, string str) {
 	vector<string> strVs;
 	Login* l = new Login();
 	int sizeVs = 0;
+	int count;
 
-		sizeVs = strVs.size() - 1;
 		strVs = split(str, '*');
-		if (sizeVs < 1) {
+		sizeVs = strVs.size() - 1;
+		if (sizeVs < 1 || sizeVs < t->colCount || sizeVs > t->colCount) {
 			return false;
 		}
+
 		for (int j = 0; j < sizeVs; j++) {
+			count = ++t->col[j].rowCount;
 			if (isFreeSpace(t)) {
-				t->col[j].rows[t->col[j].rowCount++] = l->trim(strVs[j].c_str());
+				t->col[j].rows[count-1] = l->trim(strVs[j].c_str());
 			}
 		}
 
@@ -389,7 +407,15 @@ bool Cmd::addRow(TABLE* t, string str) {
 }
 
 string Cmd::checkTypes(TABLE* t, string str) {
-
+	vector<string> strVs;
+	int sizeVs = 0;
+	strVs = split(str,' ');
+	sizeVs = strVs.size();
+	str = "";
+	for (int i = 0; i < sizeVs; i++) {
+		strVs[i] += "* ";
+		str += strVs[i].c_str();
+	}
 
 	return str;
 }
@@ -458,7 +484,7 @@ string Cmd::Command(char* str) {
 
 
 		t = findTable(l->trim(par2));
-		if (addRow(t, pom2)) {
+		if (addRow(t, checkTypes(t, pom2))) {
 
 			sprintf(out, "\nRecord ADDED SUCCESSFULLY !!!\n");
 			return out;
