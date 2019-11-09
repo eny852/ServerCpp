@@ -31,16 +31,20 @@ void Cmd::initialize(TABLE* table) {
 }
 
 void Cmd::freeTable(TABLE* table) {
+
+	for (int i = 0; i < table->col[0].rowCount; i++) {
+		table->col[i].rows = NULL;
+		table->col[i].rowCap = 0;
+		table->col[i].rowCount = 0;
+		strcpy(table->col[i].name,"");
+		table->col[i].type = UNDEF;
+	}
+
 	free(table->col);
 	table->col = NULL;
 	table->name = "";
 	table->colCount = 0;
 	table->colCap = 0;
-
-	for (int i = 0; i < table->col[i].rowCount; i++) {
-		table->col[i].rowCap = 0;
-		table->col[i].rows = NULL;
-	}
 }
 
 bool Cmd::isFreeSpace(TABLE* table) {
@@ -119,6 +123,12 @@ string Cmd::EnumToStrPr(prikazy p) {
 	case LOAD:
 		return "LOAD";
 		break;
+	case SORT:
+		return "SORT";
+		break;
+	case QUIT:
+		return "QUIT";
+		break;
 	}
 }
 
@@ -135,12 +145,14 @@ enum prikazy Cmd::strToEnumPr(string str) {
 	if (!strcmp(ss, "PRINT")) { return PRINT; }
 	if (!strcmp(ss, "SAVE")) { return SAVE; }
 	if (!strcmp(ss, "LOAD")) { return LOAD; }
+	if (!strcmp(ss, "SORT")) { return SORT; }
+	if (!strcmp(ss, "QUIT")) { return QUIT; }
 }
 
 string Cmd::printEnumPr() {
 	string out = "\n-------------------------\n";
-	prikazy p[8] = {CREATE, ADD, DELETE, LOGIN, REGISTER, PRINT, SAVE, LOAD};
-	for (int i = 0; i < 8; i++) {
+	prikazy p[10] = {CREATE, ADD, DELETE, LOGIN, REGISTER, PRINT, SAVE, LOAD, SORT, QUIT};
+	for (int i = 0; i < 10; i++) {
 		out += EnumToStrPr(p[i]) + "\n";
 	}
 	out += "-------------------------";
@@ -212,7 +224,7 @@ string headline(TABLE* t) {
 	for (int i = 0; i < t->colCount; i++) {
 		ciara += "-------------------------";
 	}
-	ciara += '\n';
+	ciara += "-----\n";
 	return ciara;
 }
 
@@ -220,8 +232,8 @@ string Cmd::printColumns(TABLE* t) {
 	string str;
 	string ciara = headline(t);
 	char pom[BUFFER_LENGTH] = {};
-	sprintf(pom, "| %10s: %-9s |","TABLE",t->name.c_str());
-	str += "\n-------------------------\n" +string(pom)+ciara;
+	sprintf(pom, "     | %10s: %-9s |","TABLE",t->name.c_str());
+	str += "\n------------------------------\n"+string(pom)+ciara+"     ";
 	for (int i = 0; i < t->colCount; i++) {
 		sprintf(pom,"| %10s:%-10s |",EnumToStrTp(t->col[i].type).c_str(),t->col[i].name);
 		str += string(pom);
@@ -237,6 +249,8 @@ string printRows(TABLE* t) {
 	strcpy(pom,t->name.c_str());
 	if (t->col != NULL) {
 		for (int i = 0; i < t->col[0].rowCount; i++) {
+			sprintf(pom, "| %d |", i);
+			str += string(pom);
 			for (int j = 0; j < t->colCount; j++) {
 				sprintf(pom, "| %21s |", t->col[j].rows[i].c_str());
 				str += string(pom);
@@ -420,7 +434,155 @@ string Cmd::checkTypes(TABLE* t, string str) {
 	return str;
 }
 
+string Cmd::sortByCol(string str) { //table col_name asc/dsc
+	vector<string> strV;
+	char* out = new char[TABLE_CAP];
+	TABLE* t = new TABLE();
+	strV = split(str,' ');
+	t = findTable(strV[0]);
+	string* pomRow = (string*) calloc(t->colCount,sizeof(string));
+	int sortCol = 0;
+	bool sort;
 
+	for (int j = 0; j < t->colCount; j++) {
+		if (t->col[j].name == strV[1]) {
+			sortCol = j;
+		}
+	}
+
+		for (int i = 0; i < t->col[0].rowCount; i++) {
+			sort = false;
+
+
+			if (!strcmp(strV[2].c_str(),"asc")) {
+				if (t->col[sortCol].rows[i][0] > t->col[sortCol].rows[i + 1][0]) {
+					sort = true;
+				}
+			}
+			else if (!strcmp(strV[2].c_str(), "dsc")) {
+				if (t->col[sortCol].rows[i][0] < t->col[sortCol].rows[i + 1][0]) {
+					sort = true;
+				}
+			}
+
+
+			if (t->col[sortCol].rows[i + 1] == "") {
+				break;
+			}
+			else if (t->col[sortCol].rows[i][0] == t->col[sortCol].rows[i + 1][0]) {
+				for (int j = 1; j < strlen(t->col[sortCol].rows[i].c_str()); j++) {
+
+					if (!strcmp(strV[2].c_str(), "asc")) {
+						if (t->col[sortCol].rows[i][j] == t->col[sortCol].rows[i + 1][j]) {
+							continue;
+						}
+						else if (t->col[sortCol].rows[i][j] > t->col[sortCol].rows[i + 1][j]) {
+							sort = true;
+							break;
+						}
+						else {
+							break;
+						}
+
+					}else if (!strcmp(strV[2].c_str(), "dsc")) {
+						if (t->col[sortCol].rows[i][j] == t->col[sortCol].rows[i + 1][j]) {
+							continue;
+						}
+						else if (t->col[sortCol].rows[i][j] < t->col[sortCol].rows[i + 1][j]) {
+							sort = true;
+							break;
+						}
+						else {
+							break;
+						}
+					}
+
+
+				}
+			}
+			if (sort) {
+				for (int k = 0; k < t->colCount; k++) {
+					pomRow[k] = string(t->col[k].rows[i]);
+					t->col[k].rows[i] = t->col[k].rows[i + 1].c_str();
+					t->col[k].rows[i + 1] = pomRow[k].c_str();
+				}
+			}
+		}
+
+		for (int i = 0; i < t->col[0].rowCount; i++) {
+			if (t->col[sortCol].rows[i][0] == t->col[sortCol].rows[i + 1][0] && t->col[sortCol].rows[i + 1] != "") {
+				for (int j = 1; j < strlen(t->col[sortCol].rows[i].c_str()); j++) {
+
+					if (!strcmp(strV[2].c_str(), "asc")) {
+						if (t->col[sortCol].rows[i][j] < t->col[sortCol].rows[i + 1][j]) {
+							break;
+						}
+						else if (t->col[sortCol].rows[i][j] > t->col[sortCol].rows[i + 1][j]) {
+							sortByCol(str);
+						}
+					}
+					else if (!strcmp(strV[2].c_str(), "dsc")) {
+						if (t->col[sortCol].rows[i][j] > t->col[sortCol].rows[i + 1][j]) {
+							break;
+						}
+						else if (t->col[sortCol].rows[i][j] < t->col[sortCol].rows[i + 1][j]) {
+							sortByCol(str);
+						}
+					}
+				}
+			}
+
+			if (!strcmp(strV[2].c_str(), "asc")) {
+				if (t->col[sortCol].rows[i][0] > t->col[sortCol].rows[i + 1][0] && t->col[sortCol].rows[i + 1] != "") {
+					sortByCol(str);
+				}
+			}else if (!strcmp(strV[2].c_str(), "dsc")) {
+				if (t->col[sortCol].rows[i][0] < t->col[sortCol].rows[i + 1][0] && t->col[sortCol].rows[i + 1] != "") {
+					sortByCol(str);
+				}
+			}
+		}
+
+	free(pomRow);
+	sprintf(out, "\nTABLE: <%s> SORTED SUCCESSFULLY !!!\n", t->name.c_str());
+	return out;
+}
+
+string Cmd::deletee( string str ) {	//table cislo
+	vector<string> strV = split(str,' ');
+	TABLE* t = new TABLE();
+	char* out = new char[TABLE_CAP];
+	t = findTable(strV[0]);
+	if (t->name == "") {
+		sprintf(out, "\nTABLE: <%s> DOES NOT EXISTS!\n", strV[0].c_str());
+		return out;
+	}
+	if (strV.size() == 1) {
+		freeTable(t);
+
+		sprintf(out, "\nTABLE: <%s> DELETED SUCCESSFULLY !!!\n", strV[0].c_str());
+		return out;
+	}
+	else if (strV.size() == 2) {
+		for (int i = 0; i < t->colCount; i++) {
+			t->col[i].rows[atoi(strV[1].c_str())] = "";
+		}
+		for (int i = atoi(strV[1].c_str()); i < t->col[0].rowCount; i++) {
+			for (int j = 0; j < t->colCount; j++) {
+				if (strcmp(t->col[j].rows[i + 1].c_str(),"")) {
+					t->col[j].rows[i] = t->col[j].rows[i + 1].c_str();
+				}
+			}
+		}
+		for (int i = 0; i < t->colCount; i++) {
+			t->col[i].rows[t->col[0].rowCount] = "";
+			t->col[i].rowCount--;
+		}
+		sprintf(out, "\nTABLE: <%s> Record <%d> deleted SUCCESSFULLY !!!\n", strV[0].c_str(), atoi(strV[1].c_str()));
+		return out;
+	}
+
+}
 
 string Cmd::loadTable(string str) {
 	string cesta = "D:\\Semestralka UDSP\\ServerCpp\\";
@@ -498,8 +660,12 @@ string Cmd::Command(char* str) {
 		break;
 
 	case 3: 
-		
-		return "delete";
+
+			if (string(pom1).find('?') != std::string::npos || !strcmp(pom1, "")) {
+				sprintf(out, "\ndelete <table_name> - Delete whole table\ndelete <table_name> <row_number> - Delete specific row\n");
+				return out;
+			}
+			return deletee(pom1);
 		break;
 
 	case 4: 
@@ -546,6 +712,20 @@ string Cmd::Command(char* str) {
 			return out;
 		}
 		return loadTable(pom1);
+		break;
+
+	case 9:
+
+		if (string(pom1).find('?') != std::string::npos || !strcmp(pom1, "")) {
+			sprintf(out, "\nsort <table_name> <col_name> <asc/dsc>\n");
+			return out;
+		}
+		return sortByCol(pom1);
+		break;
+
+	case 10:
+
+		return "";
 		break;
 
 	default: 

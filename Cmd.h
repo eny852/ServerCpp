@@ -10,7 +10,7 @@ using std::cerr;
 using std::endl;
 using std::vector;
 
-enum prikazy { CREATE = 1, ADD, DELETE, LOGIN, REGISTER, PRINT, SAVE, LOAD };
+enum prikazy { CREATE = 1, ADD, DELETE, LOGIN, REGISTER, PRINT, SAVE, LOAD, SORT, QUIT };
 
 enum type { INT = 1, DOUBLE, STRING, BOOLEAN, UNDEF };
 
@@ -49,6 +49,8 @@ public:
 	string Cmd::loadTable(string str);
 	string Cmd::checkTypes(TABLE* t,string str);
 	bool Cmd::addRow(TABLE* t, string str);
+	string Cmd::sortByCol(string str);
+	string Cmd::deletee(string str);
 	string Cmd::saveTable(string str);
 	vector<string> Cmd::split(string str, char delimiter);
 	TABLE* Cmd::createTable(string name);
