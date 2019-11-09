@@ -420,6 +420,8 @@ string Cmd::checkTypes(TABLE* t, string str) {
 	return str;
 }
 
+
+
 string Cmd::loadTable(string str) {
 	string cesta = "D:\\Semestralka UDSP\\ServerCpp\\";
 	Login* l = new Login();
