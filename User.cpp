@@ -8,6 +8,7 @@ User::User(string usr, string pass, bool log ) {
 	username = usr;
 	password = pass;
 	login = log;
+	unsigned int clientNumber;
 }
 
 

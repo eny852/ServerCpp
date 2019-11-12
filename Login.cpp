@@ -14,9 +14,12 @@ Login::Login() {
 
 }
 
-User* Login::findUser(User* usr) {
+User* Login::findUser(User* usr, unsigned int cn) {
 	int i;
 	for (i = 0; i < userCount; i++) {
+		if (fUsers[i].clientNumber == cn) {
+			return &fUsers[i];
+		}
 		if( !strcmp(usr->username.c_str(), fUsers[i].username.c_str()) &&
 			!strcmp(usr->password.c_str(), fUsers[i].password.c_str()) &&
 			fUsers[i].login == true ) {
@@ -26,7 +29,7 @@ User* Login::findUser(User* usr) {
 	return new User(" ", " ", false);
 }
 
- int Login::tryAddUser( User* usr ) {
+ int Login::tryAddUser( User* usr, unsigned int cn ) {
 
 	 if (Login::userCount > 20) {
 		 printf("fUsers[20] plne\n");
@@ -38,6 +41,7 @@ User* Login::findUser(User* usr) {
 		 if (!strcmp(usr->username.c_str(), fUsers[i].username.c_str()) &&
 			 !strcmp(usr->password.c_str(), fUsers[i].password.c_str())) {
 			 fUsers[i].login = true;
+			 fUsers[i].clientNumber = cn;
 			 return 0;
 		 }
 		 if ( !strcmp(usr->username.c_str(),fUsers[i].username.c_str()) &&
@@ -48,8 +52,16 @@ User* Login::findUser(User* usr) {
 	 return 2;
 }
 
+ string Login::logout(unsigned int cn) {
+	 User* usr = new User();
+	 usr = findUser(usr,cn);
+	 findUser(usr, cn)->clientNumber = 100;
+	 usr->login = false;
+	 return "\n" + usr->username + " LOGGED OUT SUCCESSFULLY!\n";
+ }
+
  bool Login::addUser( User* user) {
-	 if (tryAddUser(user)) {
+	 if (tryAddUser(user,100)) {
 		 fUsers[Login::userCount++] = *user;
 		 return true;
 	 }

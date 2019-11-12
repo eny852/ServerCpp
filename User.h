@@ -8,6 +8,7 @@ public:
 	string username;
 	string password;
 	bool login;
+	unsigned int clientNumber;
 	User( string usr, string pass, bool log );
 	User() = default;
 };

@@ -10,7 +10,7 @@ using std::cerr;
 using std::endl;
 using std::vector;
 
-enum prikazy { CREATE = 1, ADD, DELETE, LOGIN, REGISTER, PRINT, SAVE, LOAD, SORT, QUIT };
+enum prikazy { CREATE = 1, ADD, DELETE, LOGIN, REGISTER, PRINT, FIND, SAVE, LOAD, SORT, LOGOUT, QUIT };
 
 enum type { INT = 1, DOUBLE, STRING, BOOLEAN, UNDEF };
 
@@ -37,13 +37,13 @@ public:
 	string Cmd::EnumToStrPr(prikazy p);
 	string Cmd::EnumToStrTp(type tp);
 	string Cmd::printEnumPr();
-	string Cmd::Command( char* str );
+	string Cmd::Command(char* str, unsigned int clientNumber);
 	void Cmd::saveUsers();
 	void Cmd::initialize(TABLE* table);
 	void Cmd::freeTable(TABLE* table);
 	bool Cmd::isFreeSpace(TABLE* table);
 	string Cmd::printColumns(TABLE* t);
-	char* Cmd::loginUsr(char* cmd);
+	char* Cmd::loginUsr(char* cmd, unsigned int cn);
 	char* Cmd::registerUsr(char* cmd);
 	TABLE* Cmd::findTable(string str);
 	string Cmd::loadTable(string str);
@@ -52,6 +52,7 @@ public:
 	string Cmd::sortByCol(string str);
 	string Cmd::deletee(string str);
 	string Cmd::saveTable(string str);
+	string Cmd::findRow(string str);
 	vector<string> Cmd::split(string str, char delimiter);
 	TABLE* Cmd::createTable(string name);
 };

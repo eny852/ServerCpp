@@ -246,7 +246,7 @@ void ServerSocket::dealWithActivity(unsigned int clientNumber)
 				cout << "Retransmitting: " << bufferContents << " (" << msgLength << " bytes) to client " << loop << endl;
 			}*/
 			Cmd* cmd = new Cmd();
-			strcpy(pBuffer, cmd->Command(strcat(GetBuf(), " ")).c_str());
+			strcpy(pBuffer, cmd->Command(strcat(GetBuf(), " "), loop).c_str());
 			SDLNet_TCP_Send(pClientSocket[loop], (void *)pBuffer, strlen(pBuffer)+1);
 		}
 	}

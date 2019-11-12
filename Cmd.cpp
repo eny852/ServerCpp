@@ -31,6 +31,7 @@ void Cmd::initialize(TABLE* table) {
 }
 
 void Cmd::freeTable(TABLE* table) {
+	
 
 	for (int i = 0; i < table->col[0].rowCount; i++) {
 		table->col[i].rows = NULL;
@@ -120,11 +121,17 @@ string Cmd::EnumToStrPr(prikazy p) {
 	case SAVE:
 		return "SAVE";
 		break;
+	case FIND:
+		return "FIND";
+		break;
 	case LOAD:
 		return "LOAD";
 		break;
 	case SORT:
 		return "SORT";
+		break;
+	case LOGOUT:
+		return "LOGOUT";
 		break;
 	case QUIT:
 		return "QUIT";
@@ -143,16 +150,18 @@ enum prikazy Cmd::strToEnumPr(string str) {
 	if (!strcmp(ss, "LOGIN")) { return LOGIN; }
 	if (!strcmp(ss, "REGISTER")) { return REGISTER; }
 	if (!strcmp(ss, "PRINT")) { return PRINT; }
+	if (!strcmp(ss, "FIND")) { return FIND; }
 	if (!strcmp(ss, "SAVE")) { return SAVE; }
 	if (!strcmp(ss, "LOAD")) { return LOAD; }
 	if (!strcmp(ss, "SORT")) { return SORT; }
+	if (!strcmp(ss, "LOGOUT")) { return LOGOUT; }
 	if (!strcmp(ss, "QUIT")) { return QUIT; }
 }
 
 string Cmd::printEnumPr() {
 	string out = "\n-------------------------\n";
-	prikazy p[10] = {CREATE, ADD, DELETE, LOGIN, REGISTER, PRINT, SAVE, LOAD, SORT, QUIT};
-	for (int i = 0; i < 10; i++) {
+	prikazy p[12] = {CREATE, ADD, DELETE, LOGIN, REGISTER, PRINT, SAVE, FIND, LOAD, SORT, LOGOUT, QUIT};
+	for (int i = 0; i < 12; i++) {
 		out += EnumToStrPr(p[i]) + "\n";
 	}
 	out += "-------------------------";
@@ -269,7 +278,7 @@ string printRows(TABLE* t) {
 	}
 }
 
-char* Cmd::loginUsr(char* cmd) {
+char* Cmd::loginUsr(char* cmd, unsigned int cn) {
 	Login* l = new Login();
 	User* userPom;
 	char* out = new char[BUFFER_LENGTH / 10];
@@ -288,15 +297,15 @@ char* Cmd::loginUsr(char* cmd) {
 	strcpy(heslo,str[1].c_str() + '\0');
 
 	userPom = new User(l->toUpperStr(meno), heslo, false);
-	if (l->findUser(userPom)->login) {
+	if (l->findUser(userPom,cn)->login) {
 		sprintf(out, "\n\nUser>  %s  ALREADY LOGGED IN!\n\n", meno);
 		return out;
 	}
-	else if (l->tryAddUser(userPom)==0) {
+	else if (l->tryAddUser(userPom,cn)==0) {
 		sprintf(out, "\n\nUser>  %s  LOGGED IN SUCCESSFULLY!\n\n", meno);
 		return out;
 	}
-	else if(l->tryAddUser(userPom)==1){
+	else if(l->tryAddUser(userPom,cn)==1){
 		sprintf(out, "\n\nBad username or password!\n\n");
 		return out;
 	}
@@ -325,7 +334,7 @@ char* Cmd::registerUsr(char* cmd) {
 	strcpy(heslo, str[1].c_str() + '\0');
 
 	userPom = new User(l->toUpperStr(meno), heslo, false);
-	if (l->tryAddUser(userPom)==1) {
+	if (l->tryAddUser(userPom,100)==1) {
 		sprintf(out, "\n\nUser>  %s  ALREADY EXISTS!\n\n", meno);
 		return out;
 	}
@@ -558,7 +567,7 @@ string Cmd::deletee( string str ) {	//table cislo
 		return out;
 	}
 	if (strV.size() == 1) {
-		freeTable(t);
+		freeTable(findTable(strV[0]));
 
 		sprintf(out, "\nTABLE: <%s> DELETED SUCCESSFULLY !!!\n", strV[0].c_str());
 		return out;
@@ -577,6 +586,10 @@ string Cmd::deletee( string str ) {	//table cislo
 		for (int i = 0; i < t->colCount; i++) {
 			t->col[i].rows[t->col[0].rowCount] = "";
 			t->col[i].rowCount--;
+		}
+		if (atoi(strV[1].c_str()) > t->col[0].rowCount-1) {
+			sprintf(out, "\nTABLE: <%s> Record <%d> doesn't exist...\n", strV[0].c_str(), atoi(strV[1].c_str()));
+			return out;
 		}
 		sprintf(out, "\nTABLE: <%s> Record <%d> deleted SUCCESSFULLY !!!\n", strV[0].c_str(), atoi(strV[1].c_str()));
 		return out;
@@ -613,7 +626,38 @@ string Cmd::loadTable(string str) {
 	return out;
 }
 
-string Cmd::Command(char* str) {
+string Cmd::findRow(string str) {
+	TABLE* t = new TABLE();
+	TABLE* t1 = new TABLE();
+	vector<string> strV = split(str,' ');
+	initialize(t1);
+	t = findTable(strV[0]);
+	
+	for (int j = 0; j < t->colCount; j++) {
+		strcpy(t1->col[j].name, t->col[j].name);
+		t1->col[j].type = t->col[j].type;
+	}
+
+	t1->colCount = t->colCount;
+	t1->name = t->name;
+
+	for (int i = 0; i < t->col[0].rowCount; i++) {
+		for (int j = 0; j < t->colCount; j++) {
+			if (t->col[j].rows[i].find(strV[1]) < strlen(t->col[j].rows[i].c_str())) {
+				for (int k = 0; k < t->colCount; k++) {
+					t1->col[k].rows[t1->col[k].rowCount++] = string(t->col[k].rows[i]);
+				}
+				i++;
+				j = 0;
+			}
+		}
+	}
+	str = printColumns(t1) + printRows(t1);
+	freeTable(t1);
+	return str;
+}
+
+string Cmd::Command(char* str, unsigned int clientNumber) {
 	char* par1 = new char[BUFFER_LENGTH / 10];
 	char* par2 = new char[BUFFER_LENGTH / 10];
 	char* pom1 = strchr(str, ' ')+1;
@@ -674,7 +718,7 @@ string Cmd::Command(char* str) {
 			sprintf(out, "\nlogin <username> <password>\n");
 			return out;
 		}
-		return loginUsr(pom1);
+		return loginUsr(pom1,clientNumber);
 		break;
 
 	case 5: 
@@ -699,13 +743,23 @@ string Cmd::Command(char* str) {
 	case 7:
 
 		if (string(pom1).find('?') != std::string::npos || !strcmp(pom1, "")) {
+			sprintf(out, "\nfind <table_name> <substring>\n");
+			return out;
+		}
+
+		return findRow(pom1);
+		break;
+
+	case 8:
+
+		if (string(pom1).find('?') != std::string::npos || !strcmp(pom1, "")) {
 			sprintf(out, "\nsave <table_name>\n");
 			return out;
 		}
 		return saveTable(pom1);
 		break;
 
-	case 8:
+	case 9:
 
 		if (string(pom1).find('?') != std::string::npos || !strcmp(pom1, "")) {
 			sprintf(out, "\nload <table_name>\n");
@@ -714,7 +768,7 @@ string Cmd::Command(char* str) {
 		return loadTable(pom1);
 		break;
 
-	case 9:
+	case 10:
 
 		if (string(pom1).find('?') != std::string::npos || !strcmp(pom1, "")) {
 			sprintf(out, "\nsort <table_name> <col_name> <asc/dsc>\n");
@@ -723,7 +777,16 @@ string Cmd::Command(char* str) {
 		return sortByCol(pom1);
 		break;
 
-	case 10:
+	case 11:
+
+		if (string(pom1).find('?') != std::string::npos) {
+			sprintf(out, "\nlogout\n");
+			return out;
+		}
+		return l->logout(clientNumber);
+		break;
+
+	case 12:
 
 		return "";
 		break;
